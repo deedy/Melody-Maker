@@ -19,7 +19,8 @@ SELECTION_METHOD = truncation
 # -- SETUP FUNCTIONS ----
 
 def setup():
- pass #TODO any setup?
+ pass 
+ #TODO load song we are comparing against
 
 # -- END SETUP FUNCTIONS --
 
@@ -74,15 +75,19 @@ def main():
 # ----- VARIATION METHODS ----------------
 
 # Hill climber
-# Replaces a random node with a tree
-# passed in TreeNode object
-# Returns new Equation object
-def mutation(song):
+def mutation(sound):
+  ordered_sound = sound.ordered_representation
+  # take a random note and change it
+  # Maybe change its window?
   pass
 
 
-# Takes two trees and combines them together to return two Equations
+# 
 def crossover(dad,mom):
+  '''
+  Takes two songs and performs a 2 slice crossover to return two songs.
+  '''
+  # Take two random slices and then swap
   pass
 
 # ----- SELECTION METHODS ----------------
@@ -93,6 +98,33 @@ def truncation(songs):
   Precondition: songs is sorted based on song distance
   '''
   return songs[:POPULATION]
+
+# ----- REPRESENTATION ----------------
+
+class EvolvedSound(object):
+  '''
+  A representation of the sound object we are creating.
+  The representation is simply a dictionary of notes (string) -> 
+  window number where the note is played (int list)
+  '''
+  def __init__(self,sound):
+    self.notes_to_windows = sound
+    self.distance = self.calculate_distance(sound)
+    self.ordered_representation = self.get_ordering()
+
+  def calculate_distance(self,wav_file):
+    pass
+    # TODO compare song to input wav_file
+
+  def get_ordering(self):
+    ''' Returns (string * int) list, which is (Note, window_num). '''
+    note_windows = []
+    for note in self.notes_to_windows:
+      windows = self.notes_to_windows[note]
+      for window in windows:
+        note_windows.append((note,window))
+    note_windows.sort(key=lambda tup: tup[1])
+    return note_windows
 
 if __name__ == '__main__':
   main()
