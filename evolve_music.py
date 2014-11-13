@@ -68,9 +68,7 @@ def main():
   SONG_AUDIOBITE, NOTE_AUDIOBITES = setup()
   #numsamples ~= 256 * windows
   # numsamples /44100. = time in seconds
-  Tracer()()
   evosound = EvolvedSound()
-  Tracer()()
   #GENERATING RANDOM SONGS
   music_samples = []
   for n in range(POPULATION*2):
@@ -178,7 +176,7 @@ class EvolvedSound(object):
     self.halfbeats = int(math.floor(NUMBER_OF_HALFBEATS_PER_PERIOD * (song_len_ms / self.period)))
 
     note_list = []
-    for i in len(self.halfbeats):
+    for i in xrange(self.halfbeats):
       if random.random() < 0.5:
         note_list.append([])
       else:
