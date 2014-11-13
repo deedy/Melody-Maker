@@ -166,7 +166,7 @@ def truncation(songs):
 
 # ----- REPRESENTATION ----------------
 
-DEFAULT_PERIOD_MS = 200
+DEFAULT_PERIOD_MS = 2000
 class EvolvedSound(object):
   '''
   A representation of the sound object we are creating.
@@ -180,16 +180,16 @@ class EvolvedSound(object):
     self.halfbeats = int(math.floor(NUMBER_OF_HALFBEATS_PER_PERIOD * (song_len_ms / self.period)))
 
     note_list = []
-    for i in xrange(self.halfbeats/2):
-      # if random.random() < 0.5:
-      #   note_list.append([])
-      # else:
-      #   note_list.append([random.choice(NOTE_AUDIOBITES.keys())])
-      li = []
-      for i in xrange(random.randint(0,5)):
-        li.append(random.choice(NOTE_AUDIOBITES.keys()))
-      note_list.append(li)
-      note_list.append([])
+    for i in xrange(self.halfbeats):
+      if random.random() < 0.5:
+        note_list.append([])
+      else:
+        note_list.append([random.choice(NOTE_AUDIOBITES.keys())])
+      # li = []
+      # for i in xrange(random.randint(0,5)):
+      #   li.append(random.choice(NOTE_AUDIOBITES.keys()))
+      # note_list.append(li)
+      # note_list.append([])
       # note_list.append([])
       # note_list.append([])
 
