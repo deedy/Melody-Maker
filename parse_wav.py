@@ -2,6 +2,7 @@ from pydub import AudioSegment # Reading Audio data
 import os
 import numpy as np
 import time
+from IPython.core.debugger import Tracer
 
 
 STANDARD_FREQUENCY = 44100
@@ -19,7 +20,10 @@ def parse_wav(path):
   # No need to crop audio because gtzan is guaranteed to be 30 seconds
 
   # np.int16 according to specification
-  data = np.fromstring(audio._data, np.int32)
+  data = np.fromstring(audio._data, np.int16)
+
+  # Pick 1st stereo stream
+  data = data[::2]
 
   # No need to separate channels because it is Mono audio
 

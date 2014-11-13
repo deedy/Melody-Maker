@@ -37,7 +37,7 @@ OVERWRITE_SONG = False
 DATA_DIR = 'data'
 PROCESSED_DIR = 'processed'
 NOTESET_DIR = DATA_DIR + '/noteset/'
-INPUT_SONG = DATA_DIR + '/songs/short_scale.wav'
+INPUT_SONG = DATA_DIR + '/songs/silence.wav'
 PROCESSED_NOTESETS = PROCESSED_DIR + '/noteset.pik'
 PROCESSED_SONG = '{0}.pik'.format(os.sep.join([PROCESSED_DIR] + INPUT_SONG.split(os.sep)[1:]))
 
@@ -214,6 +214,7 @@ class EvolvedSound(object):
 
   def calculate_distance(self):
     # concatenate notes to (12,windows per halfbeat)
+    Tracer()()
     windows_per_halfbeat = SONG_AUDIOBITE.mfcc_cep.shape[1]/self.halfbeats
     song_data = np.concatenate((SONG_AUDIOBITE.mfcc_cep,SONG_AUDIOBITE.mfcc_delta,SONG_AUDIOBITE.mfcc_delta_deltas),axis=0)
     # Trim song_data down to fit dimensions of sound_data
