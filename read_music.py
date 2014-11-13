@@ -67,6 +67,9 @@ def read_song(path):
   return lst
 
 def create_song(notes):
+  '''
+  Takes in (note, pos (milliseconds))
+  '''
   latest_note = notes[-1][1]
   song = AudioSegment.silent(duration=latest_note+OFFSET_AT_END_OF_SONG)
   print 'creating a song of %d seconds long' % ((latest_note+OFFSET_AT_END_OF_SONG)/1000)
@@ -81,6 +84,19 @@ def save_song(song,path):
   if not os.path.exists(savedirs):
     os.makedirs(savedirs)
   song.export(savepath, format='wav')
+
+def save_representation_as_song(evolved_sound,save_path,filename,halfbeat_len):
+  ''' Saves an evolved_sound at save_path/filename.wav with the halfbeat_len in milliseconds '''
+  #create song from representation
+  length_of_sound = len(evolved_sound.note_list)*halfbeat_len #in milliseconds
+  song = AudioSegment.silent(duration=length_of_sound)
+  for notes_index in range(len(evolved_sound.note_list)):
+    notes = evolved_sound.note_list[notes_index]
+    for note in notes:
+      song = song.overlay(AudioSegment.from_wav(PRENOTE_NAME + note + '.wav'),notes_index*halfbeat_len)
+
+  #save song to file
+  save_song(song, os.sep.join([save_path,filepath]))
 
 if __name__ == '__main__':
   if len(sys.argv) < 2:

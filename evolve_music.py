@@ -7,6 +7,10 @@ import numpy as np
 import operator
 import pdb
 import math
+from logger import Logger
+import read_music
+from IPython.core.debugger import Tracer
+import AudioBite
 
 #----- GLOBALS ----------
 
@@ -15,12 +19,19 @@ EVALUATIONS = 0
 BEST_DISTANCE_SO_FAR = sys.maxint
 MAX_EVALUTATIONS = 100000
 SELECTION_METHOD = truncation
+NUMBER_OF_HALFBEATS_PER_PERIOD = 8
+LOGGER = Logger('log.txt', True)
+SAVE_DIR_FOR_SOUNDS = 'data'
+SONG_AUDIOBITE = None # Song AudioBite
+NOTE_AUDIOBITES = None # list of Note AudioBite
+
 
 # -- SETUP FUNCTIONS ----
 
 def setup():
- pass 
- #TODO load song we are comparing against
+
+  pass 
+  #TODO load song we are comparing against
 
 # -- END SETUP FUNCTIONS --
 
@@ -70,14 +81,14 @@ def main():
   new_file.write(print_tree(functions_lst[0].tree))
   new_file.close()
 
-
-
 # ----- VARIATION METHODS ----------------
 
 # Hill climber
 def mutation(sound):
-  ordered_sound = sound.ordered_representation
   # take a random note and change it
+  random_i = random.randint(0,len(sound.note_list)-1)
+  # pick random note
+
   # Maybe change its window?
   pass
 
@@ -104,27 +115,29 @@ def truncation(songs):
 class EvolvedSound(object):
   '''
   A representation of the sound object we are creating.
-  The representation is simply a dictionary of notes (string) -> 
-  window number where the note is played (int list)
+  The representation is a tuple: (period (milliseconds) * note list list)
+  The note list list contains the notes in one "halfbeat".
+  The "halfbeat" is defined as the period/NUMBER_OF_HALFBEATS_PER_PERIOD.
   '''
-  def __init__(self,sound):
-    self.notes_to_windows = sound
-    self.distance = self.calculate_distance(sound)
-    self.ordered_representation = self.get_ordering()
+  def __init__(self,period, note_list):
+    self.period = period
+    self.note_list = note_list
+    self.distance = self.calculate_distance(sound_tuple)
+
+  def __str__(self):
+    semicolon_delimited_lst_str = '[[' + ';'.join(map(str,self.note_list[0])) + ']'
+    for n in self.note_list[1:]:
+      semicolon_delimited_lst_str += ';[' + ';'.join(map(str,n)) + ']' 
+    semicolon_delimited_lst_str += ']'
+    return '"%d;%s"' % (self.period,semicolon_delimited_lst_str)
 
   def calculate_distance(self,wav_file):
     pass
     # TODO compare song to input wav_file
 
-  def get_ordering(self):
-    ''' Returns (string * int) list, which is (Note, window_num). '''
-    note_windows = []
-    for note in self.notes_to_windows:
-      windows = self.notes_to_windows[note]
-      for window in windows:
-        note_windows.append((note,window))
-    note_windows.sort(key=lambda tup: tup[1])
-    return note_windows
+  def save_sound(self,filename):
+    halfbeat = float(self.period)/NUMBER_OF_HALFBEATS_PER_PERIOD
+    read_music.save_representation_as_song(self,SAVE_DIR_FOR_SOUNDS,filename,halfbeat)
 
 if __name__ == '__main__':
   main()
