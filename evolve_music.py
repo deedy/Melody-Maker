@@ -200,10 +200,14 @@ class EvolvedSound(object):
     song_data = np.concatenate((SONG_AUDIOBITE.mfcc_cep,SONG_AUDIOBITE.mfcc_delta,SONG_AUDIOBITE.mfcc_delta_deltas),axis=0)
     # Trim song_data down to fit dimensions of sound_data
     song_data = song_data[0:,0:windows_per_halfbeat*len(self.note_list)]
+    sound_data = None
     first = True
     for notes in self.note_list:
       if len(notes) == 0:
-        sound_data = np.concatenate((sound_data,np.zeros(shape=(36,windows_per_halfbeat))),axis=1)
+        if sound_data is None:
+          sound_data = np.zeros(shape=(36,windows_per_halfbeat))
+        else:
+          sound_data = np.concatenate((sound_data,np.zeros(shape=(36,windows_per_halfbeat))),axis=1)
         continue
       note = notes[0] # TODO Handle more than one note
       note_audio = NOTE_AUDIOBITES[note]
