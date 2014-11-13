@@ -168,6 +168,7 @@ def truncation(songs):
 
 # ----- REPRESENTATION ----------------
 
+
 DEFAULT_PERIOD_MS = 1000
 class EvolvedSound(object):
   '''
@@ -178,6 +179,23 @@ class EvolvedSound(object):
   '''
   def __init__(self, note_list, period=DEFAULT_PERIOD_MS):
     self.period = DEFAULT_PERIOD_MS
+    song_len_ms = 1000*(SONG_AUDIOBITE.num_samples / 44100.)
+    self.halfbeats = int(math.floor(NUMBER_OF_HALFBEATS_PER_PERIOD * (song_len_ms / self.period)))
+
+    note_list = []
+    for i in xrange(self.halfbeats):
+      if random.random() < 0.5:
+        note_list.append([])
+      else:
+        note_list.append([random.choice(NOTE_AUDIOBITES.keys())])
+      # li = []
+      # for i in xrange(random.randint(0,5)):
+      #   li.append(random.choice(NOTE_AUDIOBITES.keys()))
+      # note_list.append(li)
+      # note_list.append([])
+      # note_list.append([])
+      # note_list.append([])
+
     self.note_list = note_list
     song_len_ms = 1000*(SONG_AUDIOBITE.num_samples / 44100.)
     self.halfbeats = int(math.floor(NUMBER_OF_HALFBEATS_PER_PERIOD * (song_len_ms / period)))
