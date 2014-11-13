@@ -20,7 +20,7 @@ import math
 
 #----- GLOBALS ----------
 
-POPULATION = 1000
+POPULATION = 10000
 EVALUATIONS = 0
 BEST_DISTANCE_SO_FAR = sys.maxint
 MAX_EVALUTATIONS = 100000
@@ -29,7 +29,7 @@ NUMBER_OF_HALFBEATS_PER_PERIOD = 8
 LOGGER = Logger('log.txt', True)
 SAVE_DIR_FOR_SOUNDS = 'data'
 SONG_AUDIOBITE = None # Song AudioBite
-NOTE_AUDIOBITES = None # list of Note AudioBite
+NOTE_AUDIOBITES = None # dict (note -> AudioBite)
 
 
 RESET_NOTES = False
@@ -37,7 +37,7 @@ OVERWRITE_SONG = False
 DATA_DIR = 'data'
 PROCESSED_DIR = 'processed'
 NOTESET_DIR = DATA_DIR + '/noteset/'
-INPUT_SONG = DATA_DIR + '/songs/full_scale.wav'
+INPUT_SONG = DATA_DIR + '/songs/short_scale.wav'
 PROCESSED_NOTESETS = PROCESSED_DIR + '/noteset.pik'
 PROCESSED_SONG = '{0}.pik'.format(os.sep.join([PROCESSED_DIR] + INPUT_SONG.split(os.sep)[1:]))
 
@@ -68,20 +68,22 @@ def main():
   SONG_AUDIOBITE, NOTE_AUDIOBITES = setup()
   #numsamples ~= 256 * windows
   # numsamples /44100. = time in seconds
-  evos = []
-  for i in xrange(10):
-    evosound = EvolvedSound()
-    evosound.save_sound('tmp{0}'.format(i))
-    evos.append(evosound)
-  Tracer()()
+
   #GENERATING RANDOM SONGS
   music_samples = []
+  dists = []
   for n in range(POPULATION*2):
-    music_samples.append() # Append random music representation
+    sound = random_sound_factory()
+    print sound.dist
+    dists.append(sound.dist)
+    music_samples.append(sound) # Append random music representation
   music_samples.sort(key=lambda e: e.dist) # Sort based on distance / fitness (whatever we're naming it)
   music_samples = music_samples[:POPULATION]
 
+  print music_samples[0]
+  Tracer()()
   best_dist = music_samples[0].dist
+  perfect = EvolvedSound([['C5'],[],['D5'],[],['E5'],[],['F5'],[]])
 
   print 'Starting evolution...'
 
@@ -166,7 +168,7 @@ def truncation(songs):
 
 # ----- REPRESENTATION ----------------
 
-DEFAULT_PERIOD_MS = 200
+DEFAULT_PERIOD_MS = 1000
 class EvolvedSound(object):
   '''
   A representation of the sound object we are creating.
@@ -174,28 +176,13 @@ class EvolvedSound(object):
   The note list list contains the notes in one "halfbeat".
   The "halfbeat" is defined as the period/NUMBER_OF_HALFBEATS_PER_PERIOD.
   '''
-  def __init__(self):
+  def __init__(self, note_list, period=DEFAULT_PERIOD_MS):
     self.period = DEFAULT_PERIOD_MS
-    song_len_ms = 1000*(SONG_AUDIOBITE.num_samples / 44100.)
-    self.halfbeats = int(math.floor(NUMBER_OF_HALFBEATS_PER_PERIOD * (song_len_ms / self.period)))
-
-    note_list = []
-    for i in xrange(self.halfbeats/2):
-      # if random.random() < 0.5:
-      #   note_list.append([])
-      # else:
-      #   note_list.append([random.choice(NOTE_AUDIOBITES.keys())])
-      li = []
-      for i in xrange(random.randint(0,5)):
-        li.append(random.choice(NOTE_AUDIOBITES.keys()))
-      note_list.append(li)
-      note_list.append([])
-      # note_list.append([])
-      # note_list.append([])
-
     self.note_list = note_list
-    # Tracer()()
-    # self.distance = self.calculate_distance(sound_tuple)
+    song_len_ms = 1000*(SONG_AUDIOBITE.num_samples / 44100.)
+    self.halfbeats = int(math.floor(NUMBER_OF_HALFBEATS_PER_PERIOD * (song_len_ms / period)))
+    assert self.halfbeats == len(note_list)
+    self.dist = self.calculate_distance()
 
   def __str__(self):
     semicolon_delimited_lst_str = '[[' + ';'.join(map(str,self.note_list[0])) + ']'
@@ -204,13 +191,60 @@ class EvolvedSound(object):
     semicolon_delimited_lst_str += ']'
     return '"%d;%s"' % (self.period,semicolon_delimited_lst_str)
 
-  def calculate_distance(self,wav_file):
-    pass
-    # TODO compare song to input wav_file
+  def __repr__(self):
+    return self.__str__()
+
+  def calculate_distance(self):
+    # concatenate notes to (12,windows per halfbeat)
+    windows_per_halfbeat = SONG_AUDIOBITE.mfcc_cep.shape[1]/self.halfbeats
+    song_data = np.concatenate((SONG_AUDIOBITE.mfcc_cep,SONG_AUDIOBITE.mfcc_delta,SONG_AUDIOBITE.mfcc_delta_deltas),axis=0)
+    # Trim song_data down to fit dimensions of sound_data
+    song_data = song_data[0:,0:windows_per_halfbeat*len(self.note_list)]
+    first = True
+    for notes in self.note_list:
+      if len(notes) == 0:
+        sound_data = np.concatenate((sound_data,np.zeros(shape=(36,windows_per_halfbeat))),axis=1)
+        continue
+      note = notes[0] # TODO Handle more than one note
+      note_audio = NOTE_AUDIOBITES[note]
+      cep = note_audio.mfcc_cep[0:,0:windows_per_halfbeat]
+      delta = note_audio.mfcc_delta[0:,0:windows_per_halfbeat]
+      ddelta = note_audio.mfcc_delta_deltas[0:,0:windows_per_halfbeat]
+      note_data = np.concatenate((cep,delta,ddelta),axis=0)
+      if first:
+        first = False
+        sound_data = note_data
+      else:
+        sound_data = np.concatenate((sound_data,note_data),axis=1)
+    mat = song_data - sound_data
+    mean_of_rows = mat.mean(axis=1)
+    stdd_of_rows = mat.std(axis=1)
+    for r in range(36):
+      mat[r] = ((mat[r]-mean_of_rows[r])/stdd_of_rows[r])**2
+    #TODO: Not sure if there is a better/faster way of computing this ^^^
+    total_error = mat.sum()
+    return total_error
+
 
   def save_sound(self,filename):
     halfbeat = float(self.period)/NUMBER_OF_HALFBEATS_PER_PERIOD
     read_music.save_representation_as_song(self,SAVE_DIR_FOR_SOUNDS,filename,halfbeat)
+
+def random_sound_factory():
+  '''
+  Returns an EvolvedSound object that is completely random.
+  '''
+  period = DEFAULT_PERIOD_MS
+  song_len_ms = 1000*(SONG_AUDIOBITE.num_samples / 44100.)
+  halfbeats = int(math.floor(NUMBER_OF_HALFBEATS_PER_PERIOD * (song_len_ms / period)))
+  note_list = []
+  for i in xrange(halfbeats):
+    li = []
+    for i in [0] if i % 2 == 0 else []:
+      li.append(random.choice(NOTE_AUDIOBITES.keys()))
+    note_list.append(li)
+  return EvolvedSound(note_list,period)
+
 
 
 # ------ NOTE METHODS ------------

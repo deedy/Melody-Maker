@@ -9,7 +9,7 @@ PARENT_OF_SAVE = 'data'
 SAVE_DIR = 'songs'
 READ_DIR = 'sheetmusic'
 PRENOTE_NAME = 'data/noteset/Piano.ff.'
-OFFSET_AT_END_OF_SONG = 0 #milliseconds
+OFFSET_AT_END_OF_SONG = 250 #milliseconds
 
 def main(path):
   '''
