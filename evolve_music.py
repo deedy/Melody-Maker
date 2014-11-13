@@ -81,7 +81,7 @@ def main():
   music_samples = music_samples[:POPULATION]
 
   print music_samples[0]
-  Tracer()()
+  # Tracer()()
   best_dist = music_samples[0].dist
   perfect = EvolvedSound([['C5'],[],['D5'],[],['E5'],[],['F5'],[]])
 
@@ -129,7 +129,7 @@ def mutation(sound):
   # TODO change this later... assumes that
   notes_to_pick_from = ['C5','Db5','D5','Eb5','E5','F5','Gb5','G5','Ab5','A5','Bb5','B5']
   random_note = random.choice(notes_to_pick_from)
-  random.shuffle(sound.note_list[i])
+  random.shuffle(sound.note_list[random_i])
 
   if len(sound.note_list[i]) > 0 and random.randint(0,1): # either delete or not.
     sound.note_list[i].pop
@@ -217,6 +217,7 @@ class EvolvedSound(object):
       else:
         sound_data = np.concatenate((sound_data,note_data),axis=1)
     mat = song_data - sound_data
+    Tracer()()
     mean_of_rows = mat.mean(axis=1)
     stdd_of_rows = mat.std(axis=1)
     for r in range(36):
