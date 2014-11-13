@@ -135,12 +135,10 @@ def crossover(dad,mom):
   son      = copy.deepcopy(dad)
   daughter = copy.deepcopy(mom)
   assert len(son.note_list) == len(daughter.note_list)
-  random_i = random.randint(0,len(son.note_list))
-  random_j = random.randint(0,len(son.note_list))
-  if random_i > random_j:
-    tmp = random i
-    random_i = random_j
-    random_j = tmp
+  rand_i = random.randint(0,len(son.note_list))
+  rand_j = random.randint(0,len(son.note_list))
+  random_i = min(rand_i,rand_j)
+  random_j = max(rand_i,rand_j)
   son_middle = son.note_list[random_i:random_j]
   daughter_middle = daughter.note_list[random_i:random_j]
   son.note_list = son.note_list[0:random_i] + daughter_middle + son.note_list[random_j:]
@@ -196,6 +194,7 @@ def moveNote(note_str,n):
   new_note = scale[(i + n) % len(scale)]
   new_octave = octave + (i + n) / len(scale)
   return str(new_note) + str(new_octave)
+
   
 
 if __name__ == '__main__':
