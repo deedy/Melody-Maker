@@ -8,7 +8,7 @@ import glob
 PARENT_OF_SAVE = 'data'
 SAVE_DIR = 'pianosongs'
 READ_DIR = 'sheetmusic'
-PRENOTE_NAME = 'data/piano/Piano.ff.'
+PRENOTE_NAME = 'data/noteset/Piano.ff.'
 OFFSET_AT_END_OF_SONG = 2000 #milliseconds
 
 def main(path):
