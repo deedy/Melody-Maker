@@ -55,7 +55,8 @@ def setup():
     note_str  = re.search(r'[A-G]b?[0-9]',note.original_path).group()
     if note_str:
       note_dict[note_str] = note
-  return note_dict, song_sample
+  SONG_AUDIOBITE = song_sample
+  NOTE_AUDIOBITES = node_dict
 
 # -- END SETUP FUNCTIONS --
 
