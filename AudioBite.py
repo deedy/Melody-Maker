@@ -306,5 +306,5 @@ class AudioBite():
     if savedir == None:
         filepath, _  = os.path.splitext(self.original_path)
         savedir = os.sep.join([SAVE_DIR] + filepath.split(os.sep)[1:])
-    pickle.dump(self, open('{0}.pik'.format(savedir), 'wb'))
+    pickle.dump(self, open(savedir, 'wb'))
 
