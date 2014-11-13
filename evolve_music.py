@@ -63,6 +63,8 @@ def setup():
 
 def main():
   global BEST_DISTANCE_SO_FAR
+  global SONG_AUDIOBITE
+  global NOTE_AUDIOBITES
   SONG_AUDIOBITE, NOTE_AUDIOBITES = setup()
   #numsamples ~= 256 * windows
   # numsamples /44100. = time in seconds
