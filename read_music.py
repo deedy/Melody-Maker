@@ -9,7 +9,7 @@ PARENT_OF_SAVE = 'data'
 SAVE_DIR = 'songs'
 READ_DIR = 'sheetmusic'
 PRENOTE_NAME = 'data/noteset/Piano.ff.'
-OFFSET_AT_END_OF_SONG = 2000 #milliseconds
+OFFSET_AT_END_OF_SONG = 250 #milliseconds
 
 def main(path):
   '''
@@ -56,6 +56,9 @@ def read_song(path):
     # TODO throw exceptions if format is off
     lst = []
     for line in f:
+      if line.strip() == '':
+        continue
+      print line,
       pair = line.rstrip().split()
       #TODO fix
       measure_num = float(pair[1])-1

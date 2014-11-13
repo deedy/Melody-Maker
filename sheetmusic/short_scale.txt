@@ -1,0 +1,7 @@
+Period: 1000 milliseconds
+TimeSignature: 4
+C5  1  1 
+D5  1  2
+E5  1  3
+F5  1  4
+
