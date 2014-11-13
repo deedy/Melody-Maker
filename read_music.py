@@ -96,7 +96,7 @@ def save_representation_as_song(evolved_sound,save_path,filename,halfbeat_len):
       song = song.overlay(AudioSegment.from_wav(PRENOTE_NAME + note + '.wav'),notes_index*halfbeat_len)
 
   #save song to file
-  save_song(song, os.sep.join([save_path,filepath]))
+  save_song(song, os.sep.join([save_path,filename]))
 
 if __name__ == '__main__':
   if len(sys.argv) < 2:
