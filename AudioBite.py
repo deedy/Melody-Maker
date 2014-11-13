@@ -56,6 +56,11 @@ class AudioBite():
     self.mel_specgram, self.mel_spec_frequencies = self.__init_mel_spectrogram()
     print('Done computing mel spectrogram in {0} seconds.\n'.format(time.time() - mel_spectrogram_start_time))
 
+    ## DONT SAVE SPECGRAM
+    self.specgram = None
+    self.spec_frequencies = None
+    self.frame_bins = None
+
 
   def __init_spectrogram(self,
       nfft = DEFAULT_WINDOW_SIZE,
@@ -297,8 +302,9 @@ class AudioBite():
     ax.set_zlabel('Log Amplitude')
     return fig, ax
 
-  def save(self):
-    filepath, _  = os.path.splitext(self.original_path)
-    savepath = os.sep.join([SAVE_DIR] + filepath.split(os.sep)[1:])
-    pickle.dump(self, open('{0}.pik'.format(savepath), 'wb'))
+  def save(self, savedir = None):
+    if savedir == None:
+        filepath, _  = os.path.splitext(self.original_path)
+        savedir = os.sep.join([SAVE_DIR] + filepath.split(os.sep)[1:])
+    pickle.dump(self, open('{0}.pik'.format(savedir), 'wb'))
 

@@ -12,6 +12,10 @@ import read_music
 from IPython.core.debugger import Tracer
 import AudioBite
 import copy
+import cPickle as pickle
+from main import preprocessor
+import os
+import re
 
 #----- GLOBALS ----------
 
@@ -19,7 +23,7 @@ POPULATION = 1000
 EVALUATIONS = 0
 BEST_DISTANCE_SO_FAR = sys.maxint
 MAX_EVALUTATIONS = 100000
-SELECTION_METHOD = truncation
+SELECTION_METHOD = 'truncation'
 NUMBER_OF_HALFBEATS_PER_PERIOD = 8
 LOGGER = Logger('log.txt', True)
 SAVE_DIR_FOR_SOUNDS = 'data'
@@ -27,12 +31,33 @@ SONG_AUDIOBITE = None # Song AudioBite
 NOTE_AUDIOBITES = None # list of Note AudioBite
 
 
+RESET_NOTES = False
+OVERWRITE_SONG = False
+DATA_DIR = 'data'
+PROCESSED_DIR = 'processed'
+NOTESET_DIR = DATA_DIR + '/noteset/'
+INPUT_SONG = DATA_DIR + '/songs/full_scale.wav'
+PROCESSED_NOTESETS = PROCESSED_DIR + '/noteset.pik'
+PROCESSED_SONG = '{0}.pik'.format(os.sep.join([PROCESSED_DIR] + INPUT_SONG.split(os.sep)[1:]))
+
 # -- SETUP FUNCTIONS ----
 
 def setup():
-
-  pass 
-  #TODO load song we are comparing against
+  if RESET_NOTES or not os.path.isfile(PROCESSED_NOTESETS):
+    preprocessor(NOTESET_DIR, PROCESSED_NOTESETS)
+  if OVERWRITE_SONG or not os.path.isfile(PROCESSED_SONG):
+    preprocessor(INPUT_SONG, PROCESSED_SONG)
+  print('Loading notes...')
+  note_set = pickle.load( open( PROCESSED_NOTESETS, 'rb' ) )
+  print('Loading song...')
+  song_sample = pickle.load( open( PROCESSED_SONG, 'rb' ) )
+  note_dict = {}
+  for note in note_set:
+    note_str  = re.search(r'[A-G]b?[0-9]',note.original_path).group()
+    if note_str:
+      note_dict[note_str] = note
+  SONG_AUDIOBITE = song_sample
+  NOTE_AUDIOBITES = node_dict
 
 # -- END SETUP FUNCTIONS --
 
@@ -54,24 +79,24 @@ def main():
   while EVALUATIONS < MAX_EVALUTATIONS:
     new_music_samples = []
     for m in music_samples:
-      new_music_samples.append(m) #Elitism 
+      new_music_samples.append(m) #Elitism
 
     #Variation step
     for n in range(len(music_samples)):
-      #select random parents: 
+      #select random parents:
       if random.randint(1,10) <= 4: # P_CROSSOVER (probability that we crossover, rewrite, this looks bad)
         m1 = random.choice(music_samples)
         m2 = random.choice(music_samples)
         son, daughter = crossover(m1, m2)
         new_music_samples.append(son)
-        new_music_samples.append(daughter) 
+        new_music_samples.append(daughter)
       else:
         child = mutation(music_samples[n])
         new_music_samples.append(child)
 
     #Selection step
     new_music_samples.sort(key=lambda e: e.dist)
-    music_samples = SELECTION_METHOD(new_function_lst) 
+    music_samples = SELECTION_METHOD(new_function_lst)
 
     print `EVALUATIONS` + " " + `music_samples[0].dist`
     BEST_DISTANCE_SO_FAR = music_samples[0].dist
@@ -148,7 +173,7 @@ class EvolvedSound(object):
   def __str__(self):
     semicolon_delimited_lst_str = '[[' + ';'.join(map(str,self.note_list[0])) + ']'
     for n in self.note_list[1:]:
-      semicolon_delimited_lst_str += ';[' + ';'.join(map(str,n)) + ']' 
+      semicolon_delimited_lst_str += ';[' + ';'.join(map(str,n)) + ']'
     semicolon_delimited_lst_str += ']'
     return '"%d;%s"' % (self.period,semicolon_delimited_lst_str)
 
@@ -171,7 +196,6 @@ def moveNote(note_str,n):
   new_note = scale[(i + n) % len(scale)]
   new_octave = octave + (i + n) / len(scale)
   return str(new_note) + str(new_octave)
-
   
 
 if __name__ == '__main__':

@@ -13,18 +13,7 @@ from IPython.core.debugger import Tracer
 SAVE_DIR = 'processed'
 PARSE_METHODS = {'.mp3': parse_mp3, '.au': parse_gtzan, '.wav':parse_wav}
 
-if __name__ == '__main__':
-  usage = "usage: %prog [options] arg"
-  parser = OptionParser(usage)
-  (options, args) = parser.parse_args()
-
-  if len(args) == 0:
-    raise Exception('No arguments supplied. Failing.')
-    sys.exit
-  if len(args) > 1:
-    print('Only accepts one argument at this moment. Using first argument {0}'.format(args[0]))
-  path = args[0]
-
+def preprocessor(path, save_path = None):
   to_process = []
   if os.path.isfile(path):
     fp, ext = os.path.splitext(path)
@@ -39,14 +28,14 @@ if __name__ == '__main__':
     to_process = audio_files
 
     # Add option to reprocess all
-    unprocessed_files = []
-    for audio_file in audio_files:
-      filepath, ext  = os.path.splitext(audio_file)
-      savepath = os.sep.join([SAVE_DIR] + filepath.split(os.sep)[1:])
-      processed_files = glob.glob(savepath+'*')
-      if len(processed_files) == 0:
-        unprocessed_files.append(audio_file)
-    to_process = unprocessed_files
+    # unprocessed_files = []
+    # for audio_file in audio_files:
+    #   filepath, ext  = os.path.splitext(audio_file)
+    #   savepath = os.sep.join([SAVE_DIR] + filepath.split(os.sep)[1:])
+    #   processed_files = glob.glob(savepath+'*')
+    #   if len(processed_files) == 0:
+    #     unprocessed_files.append(audio_file)
+    # to_process = unprocessed_files
     print('Beginning to parse {0} mp3 files in {1}'.format(len(to_process), path))
   else:
     raise Exception('{0} is not a valid directory or path'.format(path))
@@ -56,13 +45,35 @@ if __name__ == '__main__':
     _, ext  = os.path.splitext(audio_file)
     path, data, freq = PARSE_METHODS[ext](audio_file)
     processed_audio.append(AudioBite(path, data, freq))
-    processed_audio[-1].save_spectrogram()
-    processed_audio[-1].save_mel_spectrogram(plot_type = 'all')
-    processed_audio[-1].save_mfcc()
-    processed_audio[-1].save()
+  if len(processed_audio) == 1:
+    processed_audio[-1].save(save_path)
+  else:
+    if save_path == None:
+      raise Exception('plox enter path for saving from dir')
+    pickle.dump(processed_audio, open(save_path, 'wb'))
+
+
+    # processed_audio[-1].save_spectrogram()
+    # processed_audio[-1].save_mel_spectrogram(plot_type = 'all')
+    # processed_audio[-1].save_mfcc()
+    # processed_audio[-1].save()
+
+if __name__ == '__main__':
+  usage = "usage: %prog [options] arg"
+  parser = OptionParser(usage)
+  (options, args) = parser.parse_args()
+
+  if len(args) == 0:
+    raise Exception('No arguments supplied. Failing.')
+    sys.exit
+  if len(args) > 1:
+    print('Only accepts one argument at this moment. Using first argument {0}'.format(args[0]))
+  path = args[0]
+  preprocessor(path)
+
   # savepath = os.sep.join([SAVE_DIR,"alldata"])
   # pickle.dump(processed_audio, open('{0}.pik'.format(savepath), 'wb'))
-  Tracer()()
+  # Tracer()()
   # Shows small difference for i = 2
   # sum(sum(np.square(processed_audio[1].mfcc_cep.T[:processed_audio[i].mfcc_cep.shape[1]] - processed_audio[i].mfcc_cep.T)))
   #[sum(sum(np.square(processed_audio[1].mfcc_cep.T[:processed_audio[i].mfcc_cep.shape[1]] - processed_audio[i].mfcc_cep.T))) for i in xrange(2,len(processed_audio))]
