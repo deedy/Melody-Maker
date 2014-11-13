@@ -15,6 +15,7 @@ import cPickle as pickle
 from main import preprocessor
 import os
 import re
+import math
 
 #----- GLOBALS ----------
 
@@ -55,15 +56,18 @@ def setup():
     note_str  = re.search(r'[A-G]b?[0-9]',note.original_path).group()
     if note_str:
       note_dict[note_str] = note
-  SONG_AUDIOBITE = song_sample
-  NOTE_AUDIOBITES = node_dict
+  return (song_sample,  note_dict)
 
 # -- END SETUP FUNCTIONS --
 
 def main():
   global BEST_DISTANCE_SO_FAR
-  setup()
-
+  SONG_AUDIOBITE, NOTE_AUDIOBITES = setup()
+  #numsamples ~= 256 * windows
+  # numsamples /44100. = time in seconds
+  Tracer()()
+  evosound = EvolvedSound()
+  Tracer()()
   #GENERATING RANDOM SONGS
   music_samples = []
   for n in range(POPULATION*2):
@@ -135,8 +139,10 @@ def truncation(songs):
   '''
   return songs[:POPULATION]
 
+
 # ----- REPRESENTATION ----------------
 
+DEFAULT_PERIOD_MS = 1000
 class EvolvedSound(object):
   '''
   A representation of the sound object we are creating.
@@ -144,9 +150,20 @@ class EvolvedSound(object):
   The note list list contains the notes in one "halfbeat".
   The "halfbeat" is defined as the period/NUMBER_OF_HALFBEATS_PER_PERIOD.
   '''
-  def __init__(self,period, note_list):
-    self.period = period
+  def __init__(self):
+    Tracer()()
+    self.period = DEFAULT_PERIOD_MS
+    song_len_ms = 1000*(SONG_AUDIOBITE.num_samples / 44100.)
+    self.halfbeats = int(math.floor(NUMBER_OF_HALFBEATS_PER_PERIOD * (song_len_ms / self.period)))
+
+    note_list = []
+    for i in len(self.halfbeats):
+      if random.random() < 0.5:
+        note_list.append([])
+      else:
+        note_list.append([random.choice(NOTE_AUDIOBITES.keys())])
     self.note_list = note_list
+    Tracer()()
     self.distance = self.calculate_distance(sound_tuple)
 
   def __str__(self):
@@ -163,6 +180,8 @@ class EvolvedSound(object):
   def save_sound(self,filename):
     halfbeat = float(self.period)/NUMBER_OF_HALFBEATS_PER_PERIOD
     read_music.save_representation_as_song(self,SAVE_DIR_FOR_SOUNDS,filename,halfbeat)
+
+
 
 if __name__ == '__main__':
   main()
