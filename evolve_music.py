@@ -68,7 +68,12 @@ def main():
   SONG_AUDIOBITE, NOTE_AUDIOBITES = setup()
   #numsamples ~= 256 * windows
   # numsamples /44100. = time in seconds
-  evosound = EvolvedSound()
+  evos = []
+  for i in xrange(10):
+    evosound = EvolvedSound()
+    evosound.save_sound('tmp{0}'.format(i))
+    evos.append(evosound)
+  Tracer()()
   #GENERATING RANDOM SONGS
   music_samples = []
   for n in range(POPULATION*2):
@@ -161,7 +166,7 @@ def truncation(songs):
 
 # ----- REPRESENTATION ----------------
 
-DEFAULT_PERIOD_MS = 1000
+DEFAULT_PERIOD_MS = 200
 class EvolvedSound(object):
   '''
   A representation of the sound object we are creating.
@@ -170,20 +175,27 @@ class EvolvedSound(object):
   The "halfbeat" is defined as the period/NUMBER_OF_HALFBEATS_PER_PERIOD.
   '''
   def __init__(self):
-    Tracer()()
     self.period = DEFAULT_PERIOD_MS
     song_len_ms = 1000*(SONG_AUDIOBITE.num_samples / 44100.)
     self.halfbeats = int(math.floor(NUMBER_OF_HALFBEATS_PER_PERIOD * (song_len_ms / self.period)))
 
     note_list = []
-    for i in xrange(self.halfbeats):
-      if random.random() < 0.5:
-        note_list.append([])
-      else:
-        note_list.append([random.choice(NOTE_AUDIOBITES.keys())])
+    for i in xrange(self.halfbeats/2):
+      # if random.random() < 0.5:
+      #   note_list.append([])
+      # else:
+      #   note_list.append([random.choice(NOTE_AUDIOBITES.keys())])
+      li = []
+      for i in xrange(random.randint(0,5)):
+        li.append(random.choice(NOTE_AUDIOBITES.keys()))
+      note_list.append(li)
+      note_list.append([])
+      # note_list.append([])
+      # note_list.append([])
+
     self.note_list = note_list
-    Tracer()()
-    self.distance = self.calculate_distance(sound_tuple)
+    # Tracer()()
+    # self.distance = self.calculate_distance(sound_tuple)
 
   def __str__(self):
     semicolon_delimited_lst_str = '[[' + ';'.join(map(str,self.note_list[0])) + ']'
