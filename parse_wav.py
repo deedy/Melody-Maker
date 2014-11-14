@@ -23,7 +23,7 @@ def parse_wav(path):
   data = np.fromstring(audio._data, np.int16)
 
   # Pick 1st stereo stream
-  data = data[::2]
+  # data = data[1::2]
 
   # No need to separate channels because it is Mono audio
 

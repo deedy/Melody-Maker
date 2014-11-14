@@ -16,7 +16,7 @@ SAVE_DIR = 'processed'
 SPECTROGRAM_BINS = 4096
 DEFAULT_WINDOW_SIZE = 512
 DEFAULT_OVERLAP_RATIO = 0.5
-DEFAULT_NUM_MEL_BANDS = 128
+DEFAULT_NUM_MEL_BANDS = 256
 
 DEFAULT_MFCC_BANDS = 26
 DEFAULT_NUM_MFCC_COEFFICIENTS = 13
@@ -59,8 +59,6 @@ class AudioBite():
     ## DONT SAVE SPECGRAM
     self.specgram = None
     self.spec_frequencies = None
-    self.frame_bins = None
-
 
   def __init_spectrogram(self,
       nfft = DEFAULT_WINDOW_SIZE,

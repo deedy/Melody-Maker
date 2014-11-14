@@ -17,6 +17,8 @@ from main import preprocessor
 import os
 import re
 import math
+from scipy.ndimage.filters import maximum_filter
+from scipy.ndimage.morphology import (generate_binary_structure, iterate_structure, binary_erosion)
 
 #----- GLOBALS ----------
 
@@ -37,7 +39,7 @@ OVERWRITE_SONG = False
 DATA_DIR = 'data'
 PROCESSED_DIR = 'processed'
 NOTESET_DIR = DATA_DIR + '/noteset/'
-INPUT_SONG = DATA_DIR + '/songs/silence.wav'
+INPUT_SONG = DATA_DIR + '/songs/jingle_bells.wav'
 PROCESSED_NOTESETS = PROCESSED_DIR + '/noteset.pik'
 PROCESSED_SONG = '{0}.pik'.format(os.sep.join([PROCESSED_DIR] + INPUT_SONG.split(os.sep)[1:]))
 
@@ -61,6 +63,50 @@ def setup():
 
 # -- END SETUP FUNCTIONS --
 
+
+DEFAULT_AMP_MIN = 20
+PEAK_NEIGHBORHOOD_SIZE = 20
+
+def get_2D_peaks(arr2D, plot=False, amp_min=DEFAULT_AMP_MIN):
+    # http://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.morphology.iterate_structure.html#scipy.ndimage.morphology.iterate_structure
+    struct = generate_binary_structure(2, 1)
+    neighborhood = iterate_structure(struct, PEAK_NEIGHBORHOOD_SIZE)
+
+    # find local maxima using our fliter shape
+    local_max = maximum_filter(arr2D, footprint=neighborhood) == arr2D
+    background = (arr2D == 0)
+    eroded_background = binary_erosion(background, structure=neighborhood,
+                                       border_value=1)
+
+    # Boolean mask of arr2D with True at peaks
+    detected_peaks = local_max - eroded_background
+
+    # extract peaks
+    amps = arr2D[detected_peaks]
+    j, i = np.where(detected_peaks)
+
+    amps = amps.flatten()
+    peaks = zip(i, j, amps)
+    peaks_filtered = [x for x in peaks if x[2] > amp_min]  # freq, time, amp
+
+    # get indices for frequency and time
+    frequency_idx = [x[1] for x in peaks_filtered]
+    time_idx = [x[0] for x in peaks_filtered]
+        # scatter of the peaks
+    if plot:
+        fig, ax = plt.subplots()
+        ax.scatter(time_idx, frequency_idx, color ='black')
+
+        ax.imshow(arr2D)
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Frequency')
+        ax.set_title("Spectrogram")
+        plt.gca().invert_yaxis()
+        plt.show()
+    return peaks_filtered
+
+
+
 def main():
   global BEST_DISTANCE_SO_FAR
   global SONG_AUDIOBITE
@@ -68,7 +114,7 @@ def main():
   SONG_AUDIOBITE, NOTE_AUDIOBITES = setup()
   #numsamples ~= 256 * windows
   # numsamples /44100. = time in seconds
-
+  Tracer()()
   #GENERATING RANDOM SONGS
   music_samples = []
   dists = []
@@ -200,7 +246,7 @@ class EvolvedSound(object):
     song_len_ms = 1000*(SONG_AUDIOBITE.num_samples / 44100.)
     self.halfbeats = int(math.floor(NUMBER_OF_HALFBEATS_PER_PERIOD * (song_len_ms / period)))
     assert self.halfbeats == len(note_list)
-    self.dist = self.calculate_distance()
+    # self.dist = self.calculate_distance()
 
   def __str__(self):
     semicolon_delimited_lst_str = '[[' + ';'.join(map(str,self.note_list[0])) + ']'
@@ -214,7 +260,6 @@ class EvolvedSound(object):
 
   def calculate_distance(self):
     # concatenate notes to (12,windows per halfbeat)
-    Tracer()()
     windows_per_halfbeat = SONG_AUDIOBITE.mfcc_cep.shape[1]/self.halfbeats
     song_data = np.concatenate((SONG_AUDIOBITE.mfcc_cep,SONG_AUDIOBITE.mfcc_delta,SONG_AUDIOBITE.mfcc_delta_deltas),axis=0)
     # Trim song_data down to fit dimensions of sound_data
@@ -285,3 +330,6 @@ def moveNote(note_str,n):
 
 if __name__ == '__main__':
   main()
+
+
+
