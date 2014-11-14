@@ -22,7 +22,7 @@ def main(path):
     song = create_song(music_notes)
     save_song(song,songfile)
 
-def get_song_files(path):
+def get_song_files(path,parent=PARENT_OF_SAVE,save_dir=SAVE_DIR,force_unprocessed=False):
   ''' Returns a list of song files that need to be created. '''
   to_process = []
   if os.path.isfile(path):
@@ -39,10 +39,10 @@ def get_song_files(path):
       filepath, ext  = os.path.splitext(audio_file)
       if filepath.split(os.sep)[-1] == '.DS_Store':
         continue
-      savepath = os.sep.join([PARENT_OF_SAVE,SAVE_DIR] + filepath.split(os.sep)[2:]) # should be data/pianosongs/[userfile] like octave5/scale.txt
+      savepath = os.sep.join([parent,save_dir] + filepath.split(os.sep)[2:]) # should be data/pianosongs/[userfile] like octave5/scale.txt
 
       processed_files = glob.glob(savepath+'*')
-      if len(processed_files) == 0:
+      if len(processed_files) == 0 or force_unprocessed:
         unprocessed_files.append(audio_file)
     print('Beginning to construct {0} sheet music files in {1}'.format(len(to_process), path))
   else:
@@ -50,6 +50,7 @@ def get_song_files(path):
   return unprocessed_files
 
 def read_song(path):
+  ''' Reads in text file format for song. Returns (note,time in song) list. '''
   with open(path) as f:
     period = int(f.readline().split()[1])
     time   = float(f.readline().split()[1])
