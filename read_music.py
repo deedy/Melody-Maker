@@ -4,12 +4,13 @@ from pydub import AudioSegment
 import pdb
 import os
 import glob
+from IPython.core.debugger import Tracer
 
 PARENT_OF_SAVE = 'data'
 SAVE_DIR = 'songs'
 READ_DIR = 'sheetmusic'
-PRENOTE_NAME = 'data/noteset/Piano.ff.'
-OFFSET_AT_END_OF_SONG = 250 #milliseconds
+PRENOTE_NAME = 'data/full_noteset/Piano.ff.'
+OFFSET_AT_END_OF_SONG = 0 #milliseconds
 
 def main(path):
   '''
@@ -74,7 +75,9 @@ def create_song(notes):
   '''
   Takes in (note, pos (milliseconds))
   '''
-  latest_note = notes[-1][1]
+  if len(notes) < 2:
+      raise Exception('too much panix. plox more notez than 2')
+  latest_note = notes[-1][1] + (notes[1][1] - notes[0][1])
   song = AudioSegment.silent(duration=latest_note+OFFSET_AT_END_OF_SONG)
   print 'creating a song of %d seconds long' % ((latest_note+OFFSET_AT_END_OF_SONG)/1000)
   for n in notes:

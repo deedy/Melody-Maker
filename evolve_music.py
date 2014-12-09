@@ -39,7 +39,8 @@ OVERWRITE_SONG = False
 DATA_DIR = 'data'
 PROCESSED_DIR = 'processed'
 NOTESET_DIR = DATA_DIR + '/noteset/'
-INPUT_SONG = DATA_DIR + '/songs/jingle_bells.wav'
+# INPUT_SONG = DATA_DIR + '/songs/full_scale.wav'
+INPUT_SONG = DATA_DIR + '/songs/full_scale_spread.wav'
 PROCESSED_NOTESETS = PROCESSED_DIR + '/noteset.pik'
 PROCESSED_SONG = '{0}.pik'.format(os.sep.join([PROCESSED_DIR] + INPUT_SONG.split(os.sep)[1:]))
 
@@ -97,7 +98,7 @@ def get_2D_peaks(arr2D, plot=False, amp_min=DEFAULT_AMP_MIN):
         fig, ax = plt.subplots()
         ax.scatter(time_idx, frequency_idx, color ='black')
 
-        ax.imshow(arr2D)
+        ax.imshow(arr2D, aspect='auto')
         ax.set_xlabel('Time')
         ax.set_ylabel('Frequency')
         ax.set_title("Spectrogram")
@@ -215,7 +216,7 @@ def truncation(songs):
 # ----- REPRESENTATION ----------------
 
 
-DEFAULT_PERIOD_MS = 1000
+DEFAULT_PERIOD_MS = 4000
 class EvolvedSound(object):
   '''
   A representation of the sound object we are creating.
@@ -225,8 +226,11 @@ class EvolvedSound(object):
   '''
   def __init__(self, note_list, period=DEFAULT_PERIOD_MS):
     self.period = DEFAULT_PERIOD_MS
-    song_len_ms = 1000*(SONG_AUDIOBITE.num_samples / 44100.)
+    # Strange additional of factor of 2 to account for two tracks
+    song_len_ms = 1000*(SONG_AUDIOBITE.num_samples / 44100.) / 2.0
     self.halfbeats = int(math.floor(NUMBER_OF_HALFBEATS_PER_PERIOD * (song_len_ms / self.period)))
+    self.windows = SONG_AUDIOBITE.mfcc_cep.shape[1]
+    self.windows_per_halfbeat = self.windows/self.halfbeats
 
     note_list = []
     for i in xrange(self.halfbeats):
@@ -241,12 +245,24 @@ class EvolvedSound(object):
       # note_list.append([])
       # note_list.append([])
       # note_list.append([])
-
     self.note_list = note_list
-    song_len_ms = 1000*(SONG_AUDIOBITE.num_samples / 44100.)
-    self.halfbeats = int(math.floor(NUMBER_OF_HALFBEATS_PER_PERIOD * (song_len_ms / period)))
-    assert self.halfbeats == len(note_list)
-    # self.dist = self.calculate_distance()
+    notes = {note: get_2D_peaks(NOTE_AUDIOBITES[note].mel_specgram, amp_min=20) for note in NOTE_AUDIOBITES.keys()}
+    # Set cleaned note peaks
+    self.clean_notes = {}
+    for note in notes:
+      cleaned_note = [item for item in notes[note] if item[1] > 25 and item[1] < 50 and item[2] > 20 and item[0] < self.windows_per_halfbeat*2.0]
+      self.clean_notes[note] = cleaned_note[0]
+    # Set cleaned sample note peaks
+    sample = get_2D_peaks(SONG_AUDIOBITE.mel_specgram, amp_min=20)
+    clean_sample = [item for item in sample if item[1] > 25 and item[1] < 50 and item[2] > 20]
+    self.sample_buckets = {}
+    for item in clean_sample:
+      index = item[0]/ (self.windows_per_halfbeat*2)
+      if not index in self.sample_buckets:
+        self.sample_buckets[index] = []
+      self.sample_buckets[index].append(item)
+    self.dist = self.calculate_distance()
+    Tracer()()
 
   def __str__(self):
     semicolon_delimited_lst_str = '[[' + ';'.join(map(str,self.note_list[0])) + ']'
@@ -259,40 +275,52 @@ class EvolvedSound(object):
     return self.__str__()
 
   def calculate_distance(self):
-    # concatenate notes to (12,windows per halfbeat)
-    windows_per_halfbeat = SONG_AUDIOBITE.mfcc_cep.shape[1]/self.halfbeats
-    song_data = np.concatenate((SONG_AUDIOBITE.mfcc_cep,SONG_AUDIOBITE.mfcc_delta,SONG_AUDIOBITE.mfcc_delta_deltas),axis=0)
-    # Trim song_data down to fit dimensions of sound_data
-    song_data = song_data[0:,0:windows_per_halfbeat*len(self.note_list)]
-    sound_data = None
-    first = True
-    for notes in self.note_list:
-      if len(notes) == 0:
-        if sound_data is None:
-          sound_data = np.zeros(shape=(36,windows_per_halfbeat))
-        else:
-          sound_data = np.concatenate((sound_data,np.zeros(shape=(36,windows_per_halfbeat))),axis=1)
+    def distance_peak2(p1, p2):
+      return math.sqrt(sum([ (p1[1] - p2[1])**2]))
+    error = 0
+    for bucket in self.sample_buckets:
+      note = self.note_list[2*bucket]
+      if len(note) == 0:
+        error += 300.0
         continue
-      note = notes[0] # TODO Handle more than one note
-      note_audio = NOTE_AUDIOBITES[note]
-      cep = note_audio.mfcc_cep[0:,0:windows_per_halfbeat]
-      delta = note_audio.mfcc_delta[0:,0:windows_per_halfbeat]
-      ddelta = note_audio.mfcc_delta_deltas[0:,0:windows_per_halfbeat]
-      note_data = np.concatenate((cep,delta,ddelta),axis=0)
-      if first:
-        first = False
-        sound_data = note_data
-      else:
-        sound_data = np.concatenate((sound_data,note_data),axis=1)
-    mat = song_data - sound_data
-    Tracer()()
-    mean_of_rows = mat.mean(axis=1)
-    stdd_of_rows = mat.std(axis=1)
-    for r in range(36):
-      mat[r] = ((mat[r]-mean_of_rows[r])/stdd_of_rows[r])**2
-    #TODO: Not sure if there is a better/faster way of computing this ^^^
-    total_error = mat.sum()
-    return total_error
+      note_peak = self.clean_notes[note[0]]
+      error += distance_peak2(note_peak, self.sample_buckets[bucket][0])
+    return error
+    # Tracer()()
+    # # concatenate notes to (12,windows per halfbeat)
+
+    # song_data = np.concatenate((SONG_AUDIOBITE.mfcc_cep,SONG_AUDIOBITE.mfcc_delta,SONG_AUDIOBITE.mfcc_delta_deltas),axis=0)
+    # # Trim song_data down to fit dimensions of sound_data
+    # song_data = song_data[0:,0:windows_per_halfbeat*len(self.note_list)]
+    # sound_data = None
+    # first = True
+    # for notes in self.note_list:
+    #   if len(notes) == 0:
+    #     if sound_data is None:
+    #       sound_data = np.zeros(shape=(36,windows_per_halfbeat))
+    #     else:
+    #       sound_data = np.concatenate((sound_data,np.zeros(shape=(36,windows_per_halfbeat))),axis=1)
+    #     continue
+    #   note = notes[0] # TODO Handle more than one note
+    #   note_audio = NOTE_AUDIOBITES[note]
+    #   cep = note_audio.mfcc_cep[0:,0:windows_per_halfbeat]
+    #   delta = note_audio.mfcc_delta[0:,0:windows_per_halfbeat]
+    #   ddelta = note_audio.mfcc_delta_deltas[0:,0:windows_per_halfbeat]
+    #   note_data = np.concatenate((cep,delta,ddelta),axis=0)
+    #   if first:
+    #     first = False
+    #     sound_data = note_data
+    #   else:
+    #     sound_data = np.concatenate((sound_data,note_data),axis=1)
+    # mat = song_data - sound_data
+    # # Tracer()()
+    # mean_of_rows = mat.mean(axis=1)
+    # stdd_of_rows = mat.std(axis=1)
+    # for r in range(12):
+    #   mat[r] = ((mat[r]-mean_of_rows[r])/stdd_of_rows[r])**2
+    # #TODO: Not sure if there is a better/faster way of computing this ^^^
+    # total_error = mat.sum()
+    # return total_error
 
 
   def save_sound(self,filename):
@@ -330,6 +358,10 @@ def moveNote(note_str,n):
 
 if __name__ == '__main__':
   main()
+
+
+
+
 
 
 

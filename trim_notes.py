@@ -7,7 +7,7 @@ from pydub import AudioSegment
 import numpy as np
 import glob
 
-FREQUENCY_TO_CAPTURE = 250
+FREQUENCY_TO_CAPTURE = 1000
 
 def main(filepath_aiff_dir,filepath_wave_save_dir):
   files = read_music.get_song_files(filepath_aiff_dir,'.',filepath_wave_save_dir,force_unprocessed=True)
@@ -41,4 +41,4 @@ if __name__ == '__main__':
     raise Exception(sys.argv[1] + ' is not a directory.')
   else:
     raise Exception(sys.argv[2] + ' is not a directory.')
-    
+

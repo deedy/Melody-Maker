@@ -45,18 +45,21 @@ def preprocessor(path, save_path = None):
     _, ext  = os.path.splitext(audio_file)
     path, data, freq = PARSE_METHODS[ext](audio_file)
     processed_audio.append(AudioBite(path, data, freq))
+  for p in processed_audio:
+    p.save_mel_spectrogram(plot_type = 'all')
+    p.save_mfcc()
   if len(processed_audio) == 1:
     processed_audio[-1].save(save_path)
+    # processed_audio[-1].save_spectrogram()
+    # processed_audio[-1].save_mel_spectrogram(plot_type = 'all')
+    # processed_audio[-1].save_mfcc()
   else:
     if save_path == None:
       raise Exception('plox enter path for saving from dir')
     pickle.dump(processed_audio, open(save_path, 'wb'))
 
 
-    # processed_audio[-1].save_spectrogram()
-    # processed_audio[-1].save_mel_spectrogram(plot_type = 'all')
-    # processed_audio[-1].save_mfcc()
-    # processed_audio[-1].save()
+
 
 if __name__ == '__main__':
   usage = "usage: %prog [options] arg"
