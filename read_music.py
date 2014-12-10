@@ -11,7 +11,6 @@ SAVE_DIR = 'songs'
 READ_DIR = 'sheetmusic'
 PRENOTE_NAME = 'data/full_noteset/Piano.ff.'
 OFFSET_AT_END_OF_SONG = 0 #milliseconds
-
 def main(path):
   '''
   It runs similiarly to main.py.
