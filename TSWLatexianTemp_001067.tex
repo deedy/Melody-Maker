@@ -166,7 +166,7 @@ One of the problems we set out to tackle was "Given a piece played on a piano, c
 
 Intuitively, the generation of music using Evolutionary Algorithms seems inherently applicable. Search algorithms that hunt through vast spaces of structures representing solutions to a problem while trying to optimize a certain fitness function, in attempt to simulate the natural process of evolution, seems well suited to a task such as generating music - which resides in a large intractable space. 
 
-While other works \cite{lai} \cite{garcia} use Frequency Modulation synthesis to generate songs, our work uses a pre-defined set of piano notes \footnote{Obtained from University of Iowa Music Studios \url{http://theremin.music.uiowa.edu/MISpiano.html}} in order to attempt to reconstruct a sample of a given song. Several attempts have been made to use timbral features of audio signals to successfully classify them into genres \cite{germ} \cite{gtzan}. We therefore found it suitable to use timbral features in the fitness function of our EA as well. Unlike many popular music recognition software out there  \cite{wang}, however, we do not store a large pre-existing database of sounds with a fingerprint and simply compare timbral features to a database. Even with timbral features, it is not straightforward to accurately define distances between two audio samples in a way representative of their perceptive sound difference in reality. We begin with the initial features of the notes of a piano \footnote{Given that our audio signal data for the piano notes were obtained from a single source, several problems were encoutered due to the non-normalization of the notes across 2 of the 3 degrees of freedom of a piano - velocity of the stroke and duration of the aftertouch} and using precomputed timbral features of these notes, we attempt to derive fitness values of a certain arrangement of these notes with the timbral features of the sample sound. 
+While other works \cite{lai} \cite{garcia} use Frequency Modulation synthesis to generate songs, our work uses a pre-defined set of piano notes \footnote{Obtained from University of Iowa Music Studios \url{http://theremin.music.uiowa.edu/MISpiano.html}} in order to attempt to reconstruct a sample of a given song. Several attempts have been made to use timbral features of audio signals to successfully classify them into genres \cite{germ} \cite{gtzan}. We therefore found it suitable to use timbral features in the fitness function of our EA as well. Unlike many popular music recognition software out there  \cite{wang}, however, we do not store a large pre-existing database of sounds with a fingerprint and simply compare timbral features to a database. Even with timbral features, it is not straightforward to accurately define distances between two audio samples in a way representative of their perceptive sound difference in reality. We begin with the initial features of the notes of a piano \footnote{Given that our audio signal data for the piano notes were obtained from a single source, several problems were encountered due to the non-normalization of the notes across 2 of the 3 degrees of freedom of a piano - velocity of the stroke and duration of the aftertouch} and using precomputed timbral features of these notes, we attempt to derive fitness values of a certain arrangement of these notes with the timbral features of the sample sound. 
 
 Eventually, we were able to evolve sounds that were near-identical to the sample sound over a long running time with one method, and evolve sounds somewhat identical to distantly resembling the sample sound in a fairly short amount of time with another method.
 
@@ -191,7 +191,7 @@ that define a sound using a particular sound synthesis technique (SST), or with
 parameters that define a particular deformation on an input stream (sound effects).
 There are two broad categories of EA application in this area: as an optimization
 technique for deriving the parameters of an accurate model of a particular sound
-(usually a sampled sound) and for exploratory search in the investigation of new sounds. \cite{emcee} Although we initially set out to tackle both problems, we restrict ourselves to the former for the rest of the paper. 
+(usually a sampled sound) and for exploratory search in the investigation of new sounds. \cite{ecm2} Although we initially set out to tackle both problems, we restrict ourselves to the former for the rest of the paper. 
 
 When we optimize for a sample of sound, often from a traditional instrument (in our case, the piano), the sample sound is used as a target waveform. An EA is put to work to derive the parameters of a particular SST to produce a sound as close as possible to the target. A fitness function that measures the difference between a candidate sound and the target is usually employed and there are many technical issues involved in how best to define this. There are a
 number of examples of successful uses of this approach, Garcia \cite{garcia} being one of the foremost. Garcia used Sound Synthesis Algorithms (SSAs) to evolve sounds and used an analytical distance metric that uses the complex spectrum of the target and test signals to test its accuracy. Similar methods have been adopted by Manzolli et al \cite{manzolli} and later by Lai et al \cite{lai}. It was modified for the use with stringed instruments by Riionheimo \cite{heimo}.
@@ -226,7 +226,7 @@ $$ \frac{nP}{8} = T $$
 
 This representation reduces the space of possible notes, but fully represents everything "musically feasible" and representable by sheet music - a fair assumption. We had initially opted with a more general representation, a list of tuples of note and time of incidence sorted by the latter, but we discarded that representation for this one for its obvious advantages. We further elaborate on this representation in the further sections. 
 \subsection{Methods}
-Broadly, our high level approach, outlined in \ref{fig3} was a genetic algorithm, with crossover, mutation and selection. We varied the details of the crossover, mutation and selection function as well as maintained diversity with aging, and used the inherent linkage of our representation. Details of this are outlined in the next section. A large part of our task involved defining a computationally tractable, accurate fitness function. In that respect, we used two methods:
+Broadly, our high level approach, outlined in Figure 7, was a genetic algorithm, with crossover, mutation and selection. We varied the details of the crossover, mutation and selection function as well as maintained diversity, and used the inherent linkage of our representation. Details of this are outlined in the next section. A large part of our task involved defining a computationally tractable, accurate fitness function. In that respect, we used two methods:
 \begin{itemize}
 \item \textbf{Continuous Sound Synthesis (CSS)} Very slow, very accurate.
 \item \textbf{Spectral Peak Comparison (SPC)} Very fast, less accurate.
@@ -294,13 +294,13 @@ R_{jb} =  (1500,( & \{E5\}, \{\},  \{E5\}, \{\}, \{E5\}, \{\}, \{\}, \{\},  \\
  We then parse through the wav sound files of our piano notes. This decodes the audio, computes the audio features necessary for our fitness function, which are the spectrograms, MFCCs, and mel-spectrograms. After parsing the piano notes, we also parse the wav file that we are trying to match, which is the input to our genetic algorithm. All of this data is stored in a pickle file so that we do not have to preprocess each time.\\
  
  \item \textbf{Reading Sheet Music} -
- Besides preprocessing the data for the fitness function, we also create wav files by concatenating the piano note audio files with Pydub, a python library that allows for easy audio manipulation. We have a file reader that reads ?sheet music?. We hand translated actual scores to these text files that include the length of the period in milliseconds and the measure frame and beat that each note falls on, allowing us to create a custom wav file for us to test our genetic algorithm.\\
+ Besides preprocessing the data for the fitness function, we also create wav files by concatenating the piano note audio files with Pydub, a python library that allows for easy audio manipulation. We have a file reader that reads ``sheet music''. We hand translated actual scores to these text files that include the length of the period in milliseconds and the measure frame and beat that each note falls on, allowing us to create a custom wav file for us to test our genetic algorithm.\\
 \end{itemize}
 \subsection{Genetic Algorithm}
 \begin{itemize}
 \item \textbf{Linkage} - Linkage is necessary for good building blocks to succeed and persist through many generations. Our representation of a sound takes into account temporal proximity in order to tighten linkage. Because notes that are played near each other reside near each other in the list, building blocks and genes can easily be swapped during crossover. Our representation is remarkable because it is very closely related to a bit string; however, the search space is much larger.\\
 \item \textbf{Variation} - For the variation step in our genetic algorithm, we used a combination of mutation and crossover. Our mutation operator took the list of notes and either added a note, removed a note, or shifted a note. Making these incremental changes made a fair hill climber, but our best results came from the crossover operation, which was a two-point crossover on our note list. \\
-\item \textbf{Selection} - For the variation step, we used both Truncation at 50\% and Stochastic Universal Sampling with Elitism. Both performed well and maintained diversity almost equally.
+\item \textbf{Selection} - For the variation step, we used both Truncation at 50\% and Stochastic Universal Sampling with Elitism. Both selection methods performed well and maintained diversity almost equally.
 \end{itemize}
 
 \begin{figure*}
@@ -309,10 +309,13 @@ R_{jb} =  (1500,( & \{E5\}, \{\},  \{E5\}, \{\}, \{E5\}, \{\}, \{\}, \{\},  \\
 \end{figure*}
 
 \section{Evaluation}
-%\subsection{Methodology}
-%Experimental Details
+\subsection{Methodology}
+We used Spectral Peak Comparison for our fitness function which was not as accurate as
+Continuous Sound Synthesis, but it was much less computationally expensive. We evolved sounds with
+a population size of 100. The default period length was 4000 milliseconds, and we only ran the sounds
+for at most 10000 generations.
 \subsection{Results}
-Quantitative and qualitative analysis reveal that we were able to evolve note lists to fairly accurately represent the input sound file given our fitness function. Our genetic algorithm outperformed the hill climber on simple songs, like a full scale where the following note had a higher pitch than the preceding note, and more complex songs with riffs, like \textbf{clocks} that had varied tempos and notes. Our genetic algorithm minimized the distance function very well; however, any imperfections with the resulting evolved sound was due to a fitness function that did not fully represent what humans hear.
+Quantitative and qualitative analysis reveal that we were able to evolve note lists to fairly accurately represent the input sound file given our fitness function. Our genetic algorithm outperformed the hill climber on simple songs, like a full scale (Fig. 5) where the following note had a higher pitch than the preceding note, and more complex songs with riffs, like \textbf{clocks} (Fig. 6) that had varied tempos and notes. Our genetic algorithm minimized the distance function very well; however, any imperfections with the resulting evolved sound was due to the lack of a fast fitness function that could fully represent what humans hear.
 \begin{figure}
 \centerline{\includegraphics[width=0.9\columnwidth]{img2/fullscale}}
 \caption{The performance of fitness of a GA (in green) vs the Hill Climber (in blue) for SPC for \textbf{full scale}. Note, that while -4.0 fitness is achieved, this number is inaccurate to a certain degree, as explained in the section on SPC.}\label{fig7}
@@ -330,9 +333,9 @@ Quantitative and qualitative analysis reveal that we were able to evolve note li
 
 
 \subsection{Discussion}
-Overall, we had good results. The evolved sounds that were produced came from the genetic algorithm that minimized the fitness function very well. However, because finding a fitness function that accurately represents what humans hear is nontrivial and very difficult, the evolved sounds don't qualitatively always sound perfect. We were qualitatively able to hear a good full scale, but clocks did not sound quite like the Coldplay song. The sound for clocks did have a few elements that were similar to the real song like musical riffs that had similar tempo and pitch progression.\\
+Overall, we had good results with the Spectral Peak Comparison (SPC) fitness function and genetic algorithm. The evolved sounds that were produced came from the genetic algorithm that minimized the fitness function very well. However, because finding a fast fitness function that accurately represents what humans hear is nontrivial and very difficult, the evolved sounds don't qualitatively always sound perfect. We were qualitatively able to hear a good full scale, but clocks did not sound quite like the Coldplay song. Although, the sound for clocks did have a few elements that were similar to the real song like musical riffs that had similar tempo and pitch progression. The genetic algorithm was successful was because our representation had such tight linkage and two-point crossover could easily swap and copy riffs that repeat in songs.\\
 \\
-There were many elements of regular songs that were difficult for the fitness function to truly capture. For example, playing chords or multiple notes at the same time does not create the same music features as concatenating and overlaying those individual music notes does. Also, there is a tradeoff between a fast tempo song and having an accurate fitness reading. When piano notes are played, there is at least two to three seconds of reverberation afterwards, which is normal and expected. Reverberation is created when a sound or signal is reflected causing a large number of reflections to build up and then decay as the sound is absorbed by surrounding surfaces. However, these extra sounds interfered with succeeding window samples and would give an inaccurate reading. Therefore, the faster songs were difficult to interpret because of this interference. 
+There were many elements of regular songs that were difficult for the fitness function to truly capture. For example, playing chords or multiple notes at the same time does not create the same music features as concatenating and overlaying those individual music notes does. Also, if piano notes were played in quick succession, it was difficult to get an accurate reading. When piano notes are played, there is at least two to three seconds of reverberation afterwards, which is normal and expected. Reverberation is created when a sound or signal is reflected causing a large number of reflections to build up and then decay as the sound is absorbed by surrounding surfaces. However, these extra sounds interfered with succeeding window samples and would give an inaccurate reading. Therefore, the faster songs were difficult to interpret because of this interference.
 \section{Future Work}
 \begin{itemize}
 \item Use a faster programming language like C in order to be able run more computationally intensive tasks quicker.
@@ -344,14 +347,14 @@ There were many elements of regular songs that were difficult for the fitness fu
 \item Evolve metrics to strive toward to with a well-defined Sound Synthesis Technique (SST) to be able to achieve the larger goal of synthesizing unknown music algorithmically. 
 \end{itemize}
 \section{Conclusion}
-
-\section{Acknowlegements}
-We would like to thank Professor Lipson for all his feedback and inspiration that helped us with this project, and express great sorrow at his decision to move to Columbia University following this semester. We would like to wish him the best on his journey.
-
+In this work, we set out to tackle the difficult question of whether we can generate sheet music from an input sound file without a large pre-existing database of sounds. We show that even given a less accurate fitness function (SPC), we can still find sounds that somewhat resemble the input songs, whether it be similar riffs, note progressions, or tempos. With a more accurate fitness function (CSS), we are able to find near-identical sounds but it requires much more time. In order to predict sheet music from piano songs, we show that a standard hill climber simply mutating notes will not suffice, but we need a genetic algorithm to achieve the most similar sounds.
 \begin{figure*}[ht]
 \centerline{\includegraphics[width=0.9\paperwidth]{img2/scale}}
-\caption{The individual mel-spectrogram of each of the notes in the middle octave of the piano. \footnote{All of these notes have been reduced to the same length, although they are in actuality of different lengths}}\label{fig6}
+\caption{The individual mel-spectrogram of each of the notes in the middle octave of the piano. All of these notes have been reduced to the same length, although they are in actuality of different lengths.}
 \end{figure*}
+
+\section{Acknowledgements}
+We would like to thank Professor Lipson for all his feedback and inspiration that helped us with this project, and express great sadness at his decision to move to Columbia University following this semester. We would like to wish him the best on his journey.
 %% == end of paper:
 
 %% Optional Materials and Methods Section
@@ -396,7 +399,8 @@ We would like to thank Professor Lipson for all his feedback and inspiration tha
 
 %% Enter the largest bibliography number in the facing curly brackets
 %% following \begin{thebibliography}
-
+\bibliographystyle{plain}
+\bibliography{publications}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
