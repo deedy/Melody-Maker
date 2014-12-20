@@ -232,7 +232,7 @@ Broadly, our high level approach, outlined in \ref{fig3} was a genetic algorithm
 \item \textbf{Spectral Peak Comparison (SPC)} Very fast, less accurate.
 \end{itemize}
 \subsubsection{Continuous Sound Synthesis (CSS)}
-In this slower method, each time the fitness function is called with our representation, we use our python libraries to recreate the song from it's note structure from scratch, compute it's timbral features, and compare it with the ones of the sample we are striving to learn. This entire process, by virtue of being extremely computationally intensive, can take unto 30 seconds per evaluation, but can return extremely accurate evaluations. CSS models the interaction between the tail of one note and the start of another perfectly - much better than any model that individually looks at the spectral features of the notes and a sample. This makes it an extremely accurate fitness function. In layman terms, because I'm re-synthesizing an audio file from scratch for a member of my population, it's equivalent to replaying a song on the piano and listening to whether it sounds like the song the algorithm is striving to recreate. As you can imagine, overlaying notes even for small 10-20 second samples and computing it's mel-spectrogram is expensive.  
+In this slower method, each time the fitness function is called with our representation, we use our python libraries to recreate the song from it's note structure from scratch, compute it's timbral features, and compare it with the ones of the sample we are striving to learn. This entire process, by virtue of being extremely computationally intensive, can take up to 30 seconds per evaluation, but can return extremely accurate evaluations. CSS models the interaction between the tail of one note and the start of another perfectly - much better than any model that individually looks at the spectral features of the notes and a sample. This makes it an extremely accurate fitness function. In layman terms, because I'm re-synthesizing an audio file from scratch for a member of my population, it's equivalent to replaying a song on the piano and listening to whether it sounds like the song the algorithm is striving to recreate. As you can imagine, overlaying notes even for small 10-20 second samples and computing it's mel-spectrogram is expensive.  
 
 \subsubsection{Spectral Peak Comparison (SPC)}
 In this faster method, we individually examine features of the individual notes of the piano and attempt to identify, from it's mel-spectrogram, defining audio fingerprints. Then, given a representation $R$ and a sample we want to synthesize $S$, we simply compare the spectral features at a given half-beat in the mel-spectrogram of $S$ to the notes in $R$ being played at that time. Let's first define some of the signal processing terms that we use:
@@ -285,15 +285,34 @@ R_{jb} =  (1500,( & \{E5\}, \{\},  \{E5\}, \{\}, \{E5\}, \{\}, \{\}, \{\},  \\
 
 
 \section{System Architecture and Implementation}
-NOTE TO ERIC - explanation of log file? add other GA stuff. fix mis-uses of beats/periods in the paper. Add (more) result graphs. Review stuff i wrote. Make sure to run makeIndex + bibtex to generate references. FIX images. Sections left - System architecture + implementation, evaluation (methodology, results), discussions, conclusion. Add googdoc stuff.
+\subsection{Preprocessing}
+ \begin{itemize}
+ \item \textbf{Trimming Notes} - 
+ The piano note sound files from the University of Iowa Music Studios had extra quiet space before and after the actual piano note. We could not use these files as they were because their offsets would make finding the audio features would be much more difficult. Our first step in preprocessing was to trim these notes based on amplitude to cut out the empty space.\\
+ 
+ \item \textbf{Parsing Sound} -
+ We then parse through the wav sound files of our piano notes. This decodes the audio, computes the audio features necessary for our fitness function, which are the spectrograms, MFCCs, and mel-spectrograms. After parsing the piano notes, we also parse the wav file that we are trying to match, which is the input to our genetic algorithm. All of this data is stored in a pickle file so that we do not have to preprocess each time.\\
+ 
+ \item \textbf{Reading Sheet Music} -
+ Besides preprocessing the data for the fitness function, we also create wav files by concatenating the piano note audio files with Pydub, a python library that allows for easy audio manipulation. We have a file reader that reads ?sheet music?. We hand translated actual scores to these text files that include the length of the period in milliseconds and the measure frame and beat that each note falls on, allowing us to create a custom wav file for us to test our genetic algorithm.\\
+\end{itemize}
+\subsection{Genetic Algorithm}
+\begin{itemize}
+\item \textbf{Linkage} - Linkage is necessary for good building blocks to succeed and persist through many generations. Our representation of a sound takes into account temporal proximity in order to tighten linkage. Because notes that are played near each other reside near each other in the list, building blocks and genes can easily be swapped during crossover. Our representation is remarkable because it is very closely related to a bit string; however, the search space is much larger.\\
+\item \textbf{Variation} - For the variation step in our genetic algorithm, we used a combination of mutation and crossover. Our mutation operator took the list of notes and either added a note, removed a note, or shifted a note. Making these incremental changes made a fair hill climber, but our best results came from the crossover operation, which was a two-point crossover on our note list. \\
+\item \textbf{Selection} - For the variation step, we used both Truncation at 50\% and Stochastic Universal Sampling with Elitism. Both performed well and maintained diversity almost equally.
+\end{itemize}
+
 \begin{figure*}
 \centerline{\includegraphics[width=0.7\paperwidth]{img2/evocomp}}
 \caption{A high level outline of our genetic algorithm.}\label{fig2}
 \end{figure*}
 
 \section{Evaluation}
-\subsection{Methodology}
+%\subsection{Methodology}
+%Experimental Details
 \subsection{Results}
+Quantitative and qualitative analysis reveal that we were able to evolve note lists to fairly accurately represent the input sound file given our fitness function. Our genetic algorithm outperformed the hill climber on simple songs, like a full scale where the following note had a higher pitch than the preceding note, and more complex songs with riffs, like \textbf{clocks} that had varied tempos and notes. Our genetic algorithm minimized the distance function very well; however, any imperfections with the resulting evolved sound was due to a fitness function that did not fully represent what humans hear.
 \begin{figure}
 \centerline{\includegraphics[width=0.9\columnwidth]{img2/fullscale}}
 \caption{The performance of fitness of a GA (in green) vs the Hill Climber (in blue) for SPC for \textbf{full scale}. Note, that while -4.0 fitness is achieved, this number is inaccurate to a certain degree, as explained in the section on SPC.}\label{fig7}
@@ -311,9 +330,9 @@ NOTE TO ERIC - explanation of log file? add other GA stuff. fix mis-uses of beat
 
 
 \subsection{Discussion}
-0. overall, good results
-1. trouble in doing chords
-2. tradeoff between speed and accuracy
+Overall, we had good results. The evolved sounds that were produced came from the genetic algorithm that minimized the fitness function very well. However, because finding a fitness function that accurately represents what humans hear is nontrivial and very difficult, the evolved sounds don't qualitatively always sound perfect. We were qualitatively able to hear a good full scale, but clocks did not sound quite like the Coldplay song. The sound for clocks did have a few elements that were similar to the real song like musical riffs that had similar tempo and pitch progression.\\
+\\
+There were many elements of regular songs that were difficult for the fitness function to truly capture. For example, playing chords or multiple notes at the same time does not create the same music features as concatenating and overlaying those individual music notes does. Also, there is a tradeoff between a fast tempo song and having an accurate fitness reading. When piano notes are played, there is at least two to three seconds of reverberation afterwards, which is normal and expected. Reverberation is created when a sound or signal is reflected causing a large number of reflections to build up and then decay as the sound is absorbed by surrounding surfaces. However, these extra sounds interfered with succeeding window samples and would give an inaccurate reading. Therefore, the faster songs were difficult to interpret because of this interference. 
 \section{Future Work}
 \begin{itemize}
 \item Use a faster programming language like C in order to be able run more computationally intensive tasks quicker.
